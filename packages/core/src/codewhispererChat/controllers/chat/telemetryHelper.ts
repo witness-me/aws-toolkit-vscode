@@ -36,6 +36,7 @@ import { supportedLanguagesList } from '../chat/chatRequest/converter'
 import { AuthUtil } from '../../../codewhisperer/util/authUtil'
 import { getSelectedCustomization } from '../../../codewhisperer/util/customizationUtil'
 import { undefinedIfEmpty } from '../../../shared'
+import { uiEventRecorder } from '../../../amazonq/util/eventRecorder'
 
 export function logSendTelemetryEventFailure(error: any) {
     let requestId: string | undefined
@@ -312,6 +313,14 @@ export class CWCTelemetryHelper {
             return
         }
 
+        if (triggerPayload.traceId) {
+            uiEventRecorder.set(triggerPayload.traceId, {
+                events: {
+                    amazonq_startConversation: globals.clock.Date.now(),
+                },
+            })
+        }
+
         const telemetryUserIntent = this.getUserIntentForTelemetry(triggerPayload.userIntent)
 
         telemetry.amazonq_startConversation.emit({
@@ -331,6 +340,14 @@ export class CWCTelemetryHelper {
     }
 
     public recordAddMessage(triggerPayload: TriggerPayload, message: PromptAnswer) {
+        if (triggerPayload.traceId) {
+            uiEventRecorder.set(triggerPayload.traceId, {
+                events: {
+                    amazonq_addMessage: globals.clock.Date.now(),
+                },
+            })
+        }
+
         const triggerEvent = this.triggerEventsStorage.getLastTriggerEventByTabID(message.tabID)
 
         const event: AmazonqAddMessage = {
@@ -411,12 +428,19 @@ export class CWCTelemetryHelper {
         })
     }
 
-    public recordEnterFocusConversation(tabID: string) {
+    public recordEnterFocusConversation(tabID: string, traceId?: string) {
         const conversationId = this.getConversationId(tabID)
         if (conversationId) {
             telemetry.amazonq_enterFocusConversation.emit({
                 result: 'Succeeded',
                 cwsprChatConversationId: conversationId,
+            })
+        }
+        if (traceId) {
+            uiEventRecorder.set(traceId, {
+                events: {
+                    amazonq_enterFocusConversation: globals.clock.Date.now(),
+                },
             })
         }
     }

@@ -49,6 +49,8 @@ import { CodeWhispererSettings } from '../../../codewhisperer/util/codewhisperer
 import { getSelectedCustomization } from '../../../codewhisperer/util/customizationUtil'
 import { FeatureConfigProvider } from '../../../shared/featureConfig'
 import { getHttpStatusCode, AwsClientResponseError } from '../../../shared/errors'
+import { uiEventRecorder } from '../../../amazonq/util/eventRecorder'
+import { globals } from '../../../shared'
 
 export interface ChatControllerMessagePublishers {
     readonly processPromptChatMessage: MessagePublisher<PromptMessage>
@@ -122,6 +124,13 @@ export class ChatController {
         })
 
         this.chatControllerMessageListeners.processPromptChatMessage.onMessage((data) => {
+            if (data.traceId) {
+                uiEventRecorder.set(data.traceId, {
+                    events: {
+                        featureReceivedMessage: globals.clock.Date.now(),
+                    },
+                })
+            }
             return this.processPromptChatMessage(data)
         })
 
@@ -485,6 +494,7 @@ export class ChatController {
                         codeQuery: context?.focusAreaContext?.names,
                         userIntent: this.userIntentRecognizer.getFromPromptChatMessage(message),
                         customization: getSelectedCustomization(),
+                        traceId: message.traceId,
                     },
                     triggerID
                 )
@@ -604,7 +614,7 @@ export class ChatController {
         try {
             this.messenger.sendInitalStream(tabID, triggerID)
             response = await session.chat(request)
-            this.telemetryHelper.recordEnterFocusConversation(triggerEvent.tabID)
+            this.telemetryHelper.recordEnterFocusConversation(triggerEvent.tabID, triggerPayload.traceId)
             this.telemetryHelper.recordStartConversation(triggerEvent, triggerPayload)
 
             getLogger().info(

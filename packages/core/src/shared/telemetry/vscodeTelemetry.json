@@ -1178,6 +1178,11 @@
                     "required": true
                 }
             ]
+        },
+        {
+            "name": "event_flow",
+            "description": "Represents a series of events in the editor",
+            "metadata": []
         }
     ]
 }
