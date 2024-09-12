@@ -60,7 +60,7 @@ export class AmazonQChatMessageDuration {
                 return a.duration - b.duration
             })
 
-        // Get the total duration by subtracting the when the message was displayed and when the chat message was first sent
+        // Get the total duration by subtracting when the message was displayed and when the chat message was first sent
         const totalDuration = events[events.length - 1].duration - events[0].duration
 
         /**
