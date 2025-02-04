@@ -146,6 +146,11 @@
                     "default": true,
                     "description": "%AWS.stepFunctions.asl.format.enable.desc%"
                 },
+                "aws.stepfunctions.workflowStudio.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%AWS.stepFunctions.workflowStudio.enable.desc%"
+                },
                 "aws.stepfunctions.asl.maxItemsComputed": {
                     "type": "number",
                     "default": 5000,
@@ -1436,6 +1441,11 @@
                 {
                     "command": "aws.openInApplicationComposer",
                     "when": "isFileSystemResource && !(resourceFilename =~ /^.*\\.tc\\.json$/) && resourceFilename =~ /^.*\\.(json|yml|yaml|template)$/",
+                    "group": "z_aws@1"
+                },
+                {
+                    "command": "aws.stepfunctions.openWithWorkflowStudio",
+                    "when": "isFileSystemResource && resourceFilename =~ /^.*\\.asl\\.(json|yml|yaml)$/",
                     "group": "z_aws@1"
                 }
             ],
@@ -3840,6 +3850,16 @@
                     "dark": "resources/icons/aws/applicationcomposer/icon-dark.svg",
                     "light": "resources/icons/aws/applicationcomposer/icon.svg"
                 },
+                "cloud9": {
+                    "cn": {
+                        "category": "%AWS.title.cn%"
+                    }
+                }
+            },
+            {
+                "command": "aws.stepfunctions.openWithWorkflowStudio",
+                "title": "%AWS.command.stepFunctions.openWithWorkflowStudio%",
+                "category": "%AWS.title%",
                 "cloud9": {
                     "cn": {
                         "category": "%AWS.title.cn%"

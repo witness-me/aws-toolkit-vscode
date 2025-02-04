@@ -17,7 +17,12 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
     // Open the file with Workflow Studio editor in a new tab, or focus on the tab with WFS if it is already open
     extensionContext.subscriptions.push(
         Commands.register('aws.stepfunctions.openWithWorkflowStudio', async (uri: vscode.Uri) => {
-            await vscode.commands.executeCommand('vscode.openWith', uri, WorkflowStudioEditorProvider.viewType)
+            // TODO: add metric here
+            await vscode.commands.executeCommand(
+                'vscode.openWith',
+                uri.with({ query: 'manual=true' }),
+                WorkflowStudioEditorProvider.viewType
+            )
         })
     )
 
@@ -26,7 +31,11 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
     extensionContext.subscriptions.push(
         Commands.register('aws.stepfunctions.switchToWorkflowStudio', async (uri: vscode.Uri) => {
             await vscode.commands.executeCommand('workbench.action.closeActiveEditor')
-            await vscode.commands.executeCommand('vscode.openWith', uri, WorkflowStudioEditorProvider.viewType)
+            await vscode.commands.executeCommand(
+                'vscode.openWith',
+                uri.with({ query: 'manual=true' }),
+                WorkflowStudioEditorProvider.viewType
+            )
         })
     )
 }

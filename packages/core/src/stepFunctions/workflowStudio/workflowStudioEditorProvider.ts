@@ -10,6 +10,7 @@ import fs from '../../shared/fs/fs'
 import { getClientId } from '../../shared/telemetry/util'
 import { telemetry } from '../../shared/telemetry/telemetry'
 import globals from '../../shared/extensionGlobals'
+import { getTabSizeSetting } from '../../shared/utilities/editorUtilities'
 import { getRandomString, getStringHash } from '../../shared/utilities/textUtilities'
 import { ToolkitError } from '../../shared/errors'
 import { WorkflowStudioEditor } from './workflowStudioEditor'
@@ -89,7 +90,8 @@ export class WorkflowStudioEditorProvider implements vscode.CustomTextEditorProv
         const theme = vscode.window.activeColorTheme.kind
         const isDarkMode = theme === vscode.ColorThemeKind.Dark || theme === vscode.ColorThemeKind.HighContrast
         const darkModeTag = `<meta name='dark-mode' content='${isDarkMode}'>`
-        let html = `${htmlFileSplit[0]} <head> ${baseTag} ${localeTag} ${darkModeTag} ${htmlFileSplit[1]}`
+        const tabSizeTag = `<meta name='tab-size' content='${getTabSizeSetting()}'>`
+        let html = `${htmlFileSplit[0]} <head> ${baseTag} ${localeTag} ${darkModeTag} ${tabSizeTag} ${htmlFileSplit[1]}`
 
         const nonce = getRandomString()
         htmlFileSplit = html.split("script-src 'self'")
@@ -117,6 +119,19 @@ export class WorkflowStudioEditorProvider implements vscode.CustomTextEditorProv
         _token: vscode.CancellationToken
     ): Promise<void> {
         await telemetry.stepfunctions_openWorkflowStudio.run(async () => {
+            const fileId = getStringHash(`${document.uri.fsPath}${clientId}`)
+
+            const autoOpenWFS = vscode.workspace.getConfiguration().get('aws.stepfunctions.workflowStudio.enable', true)
+            const isManualAction = new URLSearchParams(document.uri.query).get('manual') === 'true'
+            // If the user opted out from Workflow Studio and this is not a manual open, open default editor.
+            if (!autoOpenWFS && !isManualAction) {
+                await vscode.commands.executeCommand('vscode.openWith', document.uri, 'default')
+                webviewPanel.dispose()
+                return
+
+                // TODO: add metric
+            }
+
             // For invalid JSON, open default editor and show warning message
             if (isInvalidJsonFile(document)) {
                 await vscode.commands.executeCommand('vscode.openWith', document.uri, 'default')
@@ -147,7 +162,6 @@ export class WorkflowStudioEditorProvider implements vscode.CustomTextEditorProv
             } else {
                 // Existing visualization does not exist, construct new visualization
                 try {
-                    const fileId = getStringHash(`${document.uri.fsPath}${clientId}`)
                     const newVisualization = new WorkflowStudioEditor(
                         document,
                         webviewPanel,
